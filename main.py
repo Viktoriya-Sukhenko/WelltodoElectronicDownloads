@@ -90,9 +90,48 @@ def get_requests_by_site(site, request_type, status):
     return requests
 
 
+# 📌 **Сохранение данных пользователя**
+async def save_user_data(user_id: int, username: str):
+    users_ref = db.collection("users")
+    user_doc = users_ref.document(str(user_id))
+    
+    user_data = {
+        "chat_id": user_id,
+        "username": username or "Не указан",
+        "created_at": firestore.SERVER_TIMESTAMP,
+        "notifications_enabled": True
+    }
+    
+    user_doc.set(user_data, merge=True)
+
+
+# 📌 **Получение всех пользователей и отправка уведомления**
+async def notify_all_users_on_start():
+    users_ref = db.collection("users")
+    users = users_ref.where("notifications_enabled", "==", True).stream()
+    
+    welcome_message = (
+        "🔔 Бот запущен и готов к работе!\n\n"
+        "Вы будете получать уведомления о новых заявках автоматически.\n"
+        "Используйте команду /menu для просмотра заявок."
+    )
+    
+    for user in users:
+        try:
+            user_data = user.to_dict()
+            chat_id = user_data.get("chat_id")
+            if chat_id:
+                await bot.send_message(chat_id, welcome_message)
+        except Exception as e:
+            print(f"Ошибка при отправке уведомления пользователю {chat_id}: {e}")
+
+
 # 📌 **Команда /start**
 @router.message(Command("start"))
 async def start(message: Message):
+    # Сохраняем данные пользователя
+    await save_user_data(message.from_user.id, message.from_user.username)
+    
     await message.answer(
         "🔹 Вітаю! Я бот для керування заявками.\n\nℹ Натисніть 📋 Меню, щоб переглянути заявки.",
         reply_markup=main_menu)
@@ -287,6 +326,10 @@ async def show_site_options(callback: CallbackQuery,
 # 📌 **Запуск бота**
 async def main():
     print("🔄 Запуск бота...")
+    
+    # Отправляем уведомления всем пользователям при запуске
+    await notify_all_users_on_start()
+    
     dp.include_router(router)
     await dp.start_polling(bot)
 
