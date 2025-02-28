@@ -1,4 +1,3 @@
 aiogram
 firebase-admin
 pytelegrambotapi
-flask
