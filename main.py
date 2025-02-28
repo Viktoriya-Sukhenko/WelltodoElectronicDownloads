@@ -1,7 +1,6 @@
 import os
 import json
 import asyncio
-import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from aiogram import Bot, Dispatcher, Router, F
@@ -10,23 +9,7 @@ from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.filters.callback_data import CallbackData
 from aiogram.client.default import DefaultBotProperties
-from flask import Flask
 from threading import Thread
-
-# 🔥 Функция keep_alive() для поддержки работы в Replit
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Бот работает!"
-
-def run():
-    app.run(host="0.0.0.0", port=8080)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-    print("🌐 Бот доступен по URL:", f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.co")
 
 # 🔥 Отримання змінних середовища з Secrets
 TOKEN = os.getenv("BOT_TOKEN")  # Читаємо токен з секретів Replit
@@ -302,19 +285,10 @@ async def show_site_options(callback: CallbackQuery,
 
 
 # 📌 **Запуск бота**
-keep_alive()
 async def main():
     print("🔄 Запуск бота...")
     dp.include_router(router)
     await dp.start_polling(bot)
 
 
-if __name__ == "__main__":
-    while True:
-        try:
-            keep_alive()  # Запускаем Flask-сервер
-            asyncio.run(main())  # Запускаем Telegram-бота
-        except Exception as e:
-            print(f"⚠️ Ошибка: {e}")
-            print("🔄 Перезапускаю бота через 5 секунд...")
-            time.sleep(5)  # Ждем 5 секунд и пробуем снова
+if __name__ == "__main__"
